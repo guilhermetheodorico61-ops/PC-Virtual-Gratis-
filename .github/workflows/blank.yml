@@ -1,0 +1,210 @@
+
+package com.example.windroidvm
+
+import android.app.Activity
+import android.os.Bundle
+import android.content.Intent
+import android.graphics.Color
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
+
+class MainActivity : Activity() {
+
+    private val background = Color.rgb(15, 20, 30)
+    private val accent = Color.rgb(65, 145, 255)
+    private val white = Color.WHITE
+
+    private var ram = 2048
+    private var cpu = 2
+
+    private lateinit var ramLabel: TextView
+    private lateinit var cpuLabel: TextView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(24, 30, 24, 24)
+            setBackgroundColor(background)
+        }
+
+        val scroll = android.widget.ScrollView(this)
+        scroll.addView(root)
+        setContentView(scroll)
+
+        root.addView(label("WinDroid VM", 30f, accent))
+        root.addView(label("Seu PC virtual no Android", 17f, white))
+        root.addView(space(24))
+
+        root.addView(cardTitle("Configuração da máquina"))
+
+        ramLabel = label("Memória RAM: $ram MB", 16f, white)
+        root.addView(ramLabel)
+
+        val ramSlider = SeekBar(this).apply {
+            max = 3
+            progress = 0
+            progressTintList =
+                android.content.res.ColorStateList.valueOf(accent)
+            thumbTintList =
+                android.content.res.ColorStateList.valueOf(accent)
+        }
+
+        root.addView(ramSlider)
+        ramSlider.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    ram = listOf(1024, 2048, 3072, 4096)[progress]
+                    ramLabel.text = "Memória RAM: $ram MB"
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            }
+        )
+
+        root.addView(space(16))
+
+        cpuLabel = label("Processadores virtuais: $cpu", 16f, white)
+        root.addView(cpuLabel)
+
+        val cpuSlider = SeekBar(this).apply {
+            max = 3
+            progress = 1
+            progressTintList =
+                android.content.res.ColorStateList.valueOf(accent)
+            thumbTintList =
+                android.content.res.ColorStateList.valueOf(accent)
+        }
+
+        root.addView(cpuSlider)
+        cpuSlider.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    cpu = progress + 1
+                    cpuLabel.text =
+                        "Processadores virtuais: $cpu"
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            }
+        )
+
+        root.addView(space(24))
+        root.addView(cardTitle("Sistema operacional"))
+
+        root.addView(label(
+            "Windows 10 x64 (configuração planejada)",
+            15f,
+            white
+        ))
+
+        root.addView(space(20))
+
+        root.addView(actionButton("Abrir emulador instalado") {
+            openEmulator()
+        })
+
+        root.addView(space(10))
+
+        root.addView(actionButton("Ver configuração selecionada") {
+            Toast.makeText(
+                this,
+                "RAM: $ram MB | CPU virtual: $cpu",
+                Toast.LENGTH_LONG
+            ).show()
+        })
+
+        root.addView(space(20))
+
+        root.addView(label(
+            "Aviso: este painel não inicia o Windows sozinho. " +
+            "É necessário um emulador compatível, uma máquina " +
+            "virtual configurada e uma imagem de sistema válida.",
+            14f,
+            Color.LTGRAY
+        ))
+    }
+
+    private fun openEmulator() {
+        val packages = listOf(
+            "com.limbo.emu",
+            "com.limbo.pc"
+        )
+
+        for (packageName in packages) {
+            val intent =
+                packageManager.getLaunchIntentForPackage(packageName)
+
+            if (intent != null) {
+                startActivity(intent)
+                return
+            }
+        }
+
+        Toast.makeText(
+            this,
+            "Emulador não encontrado. Instale um compatível.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    private fun label(
+        value: String,
+        size: Float,
+        color: Int
+    ): TextView {
+        return TextView(this).apply {
+            text = value
+            textSize = size
+            setTextColor(color)
+            setPadding(0, 8, 0, 8)
+            gravity = Gravity.CENTER_VERTICAL
+        }
+    }
+
+    private fun cardTitle(value: String): TextView {
+        return label(value, 20f, accent)
+    }
+
+    private fun space(height: Int): android.view.View {
+        return android.view.View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                1,
+                height
+            )
+        }
+    }
+
+    private fun actionButton(
+        title: String,
+        action: () -> Unit
+    ): Button {
+        return Button(this).apply {
+            text = title
+            isAllCaps = false
+            setOnClickListener { action() }
+
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+    }
+}
